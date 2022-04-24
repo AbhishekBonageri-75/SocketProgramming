@@ -11,15 +11,13 @@ def wdata(data_to_write):
         file1 = open('myfile.txt', 'r')
         print(file1.read())
         file1.close()
-        sys.exit("--")
 
     elif(inp == "2"):
         file1 = open('myfile.txt', 'r')
         print(file1.readlines()[-2])
         print(file1.readlines()[-1])
         file1.close()
-        sys.exit("--")
+
     else:
         print("Invalid input")
-        sys.exit("--")
 
