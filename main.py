@@ -28,7 +28,29 @@ def receiveOnePing(mySocket,timeout=0):
             i=i+1
             wdata("TimeTaken:"+ str(timeReceived - timeSent)+"\nData:"+data_str+"\n=========================================================================")
             print("Reply Received. Time Taken:"+str(timeReceived - timeSent))
-            # return
+
+        if icmpType == 8:
+            # 248+8=256
+            timeSent = struct.unpack("d", recPacket[24:32])[0]
+            data_str = struct.unpack("248s", recPacket[32:32 + 248])[0]
+            data_str = data_str.decode()
+            myChecksum=0
+            header = struct.pack("bbH", ICMP_ECHO_REQUEST, 0, myChecksum)
+            print("Enter the data to be sent")
+            data = struct.pack("d248s", timeSent, data_str.encode())
+            # Calculate the checksum on the data and the dummy header.
+            myChecksum = checksum(header + data)
+
+            # Get the right checksum, and put in the header
+            if sys.platform == 'darwin':
+                myChecksum = htons(myChecksum) & 0xffff
+            # Convert 16-bit integers from host to network byte order.
+            else:
+                myChecksum = htons(myChecksum)
+
+            header = struct.pack("bbH", ICMP_ECHO_REQUEST, 0, myChecksum)
+            packet = header + data
+            mySocket.sendto(packet, (addr, 0))
 
 def buildStr(initialStr):
     str = initialStr
