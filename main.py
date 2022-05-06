@@ -9,6 +9,7 @@ import struct
 import time
 import select
 ICMP_ECHO_REQUEST = 8
+ICMP_ECHO_REPLY = 0
 
 def receiveOnePing(mySocket,timeout=0):
     i=0
@@ -16,14 +17,13 @@ def receiveOnePing(mySocket,timeout=0):
         recPacket, addr = mySocket.recvfrom(1024)
         # print(recPacket)
         timeReceived = time.time()
-        icmpHeader = recPacket[20:24]
-        icmpType, code, mychecksum = struct.unpack(
-            "bbH", icmpHeader)
-
+        icmpHeader = recPacket[20:28]
+        icmpType, code, mychecksum,recieved_id,recieved_seq_id = struct.unpack(
+            "bbHHH", icmpHeader)
         if icmpType == 0:
             # 248+8=256
-            timeSent = struct.unpack("d", recPacket[24:32])[0]
-            data_str = struct.unpack("248s", recPacket[32:32 + 248])[0]
+            timeSent = struct.unpack("d", recPacket[28:36])[0]
+            data_str = struct.unpack("248s", recPacket[36:36 + 248])[0]
             data_str=data_str.decode()
             i=i+1
             wdata("TimeTaken:"+ str(timeReceived - timeSent)+"\nData:"+data_str+"\n=========================================================================")
@@ -31,11 +31,11 @@ def receiveOnePing(mySocket,timeout=0):
 
         if icmpType == 8:
             # 248+8=256
-            timeSent = struct.unpack("d", recPacket[24:32])[0]
-            data_str = struct.unpack("248s", recPacket[32:32 + 248])[0]
+            timeSent = struct.unpack("d", recPacket[28:36])[0]
+            data_str = struct.unpack("248s", recPacket[36:36 + 248])[0]
             data_str = data_str.decode()
             myChecksum=0
-            header = struct.pack("bbH", ICMP_ECHO_REQUEST, 0, myChecksum)
+            header = struct.pack("bbHHH", ICMP_ECHO_REPLY, 0, myChecksum,recieved_id,recieved_seq_id)
             print("Enter the data to be sent")
             data = struct.pack("d248s", timeSent, data_str.encode())
             # Calculate the checksum on the data and the dummy header.
@@ -48,7 +48,7 @@ def receiveOnePing(mySocket,timeout=0):
             else:
                 myChecksum = htons(myChecksum)
 
-            header = struct.pack("bbH", ICMP_ECHO_REQUEST, 0, myChecksum)
+            header = struct.pack("bbHHH", ICMP_ECHO_REQUEST, 0, myChecksum,recieved_id,recieved_seq_id)
             packet = header + data
             mySocket.sendto(packet, (addr, 0))
 
@@ -60,13 +60,13 @@ def buildStr(initialStr):
     return str
 
 
-async def sendOnePing(mySocket, destAddr):
+async def sendOnePing(mySocket, destAddr,id=0,seq=0):
     # Header is type (8), code (8), checksum (16)
     time.sleep(1)
     myChecksum = 0
     # Make a dummy header with a 0 checksum.
     # struct -- Interpret strings as packed binary data
-    header = struct.pack("bbH", ICMP_ECHO_REQUEST, 0, myChecksum)
+    header = struct.pack("bbHHH", ICMP_ECHO_REQUEST, 0, myChecksum,id,seq)
     print("Enter the data to be sent")
     str_to_send=input()
     timestamp=time.time()
@@ -81,7 +81,7 @@ async def sendOnePing(mySocket, destAddr):
     else:
         myChecksum = htons(myChecksum)
 
-    header = struct.pack("bbH", ICMP_ECHO_REQUEST, 0, myChecksum)
+    header = struct.pack("bbHHH", ICMP_ECHO_REQUEST, 0, myChecksum,id,seq)
     packet = header + data
     # AF_INET address must be tuple, not str
     await fn(mySocket,packet, destAddr)
@@ -99,7 +99,7 @@ def ping():
     # Send ping requests to a server separated by approximately one second
     print("Enter the destination to ping. Press 1 to exit")
     # user_input_IP = input()
-    user_input_IP = "localhost"
+    user_input_IP = "www.bing.com"
     if (user_input_IP == "1"):
         exit()
 
@@ -112,7 +112,5 @@ def ping():
     asyncio.run(sendOnePing(mySocket, destAddr))
     x = threading.Thread(target=receiveOnePing, args=(mySocket, timeout))
     x.start()
-
-
 
 ping()
