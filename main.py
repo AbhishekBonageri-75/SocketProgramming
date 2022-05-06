@@ -40,6 +40,7 @@ def buildStr(initialStr):
 
 async def sendOnePing(mySocket, destAddr):
     # Header is type (8), code (8), checksum (16)
+    time.sleep(1)
     myChecksum = 0
     # Make a dummy header with a 0 checksum.
     # struct -- Interpret strings as packed binary data
@@ -81,14 +82,14 @@ def ping():
         exit()
 
     destAddr = gethostbyname(user_input_IP)
-    mySocket.bind((destAddr,0))
+    # mySocket.bind((destAddr,0))
     print("Sending 2 ICMP message of Size 256Bytes in data to "+user_input_IP)
 
     # receiveOnePing(mySocket, timeout)
-    x = threading.Thread(target=receiveOnePing, args=(mySocket, timeout))
-    x.start()
 
     asyncio.run(sendOnePing(mySocket, destAddr))
+    x = threading.Thread(target=receiveOnePing, args=(mySocket, timeout))
+    x.start()
 
 
 
