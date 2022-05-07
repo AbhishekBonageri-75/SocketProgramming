@@ -86,7 +86,10 @@ def receiver_ICMP(mySocket, timeout=0):
             flag = 1
             wdata("TimeTaken:" + str(timeReceived - timeSent) + "\nData:" + data_str +
                   "\n=========================================================================")
-            print("Reply Received. Time Taken:" + str(timeReceived - timeSent))
+            print("___________________________________________")
+            print("ICMP Ping :", i, "\n\n", "Reply Received. Time Taken:" +
+                  str(timeReceived - timeSent))
+            print("\n Received ICMP Message :", data_str, "\n")
         # ICMP REQUEST HANDLER
         if icmpType == 8:
             # 248+8=256
@@ -113,6 +116,8 @@ def receiver_ICMP(mySocket, timeout=0):
             mySocket.sendto(packet, (addr, 0))
 
 # Function to start the sender and receiver threads.
+
+
 def ping():
     global target_hostname
     icmp = getprotobyname("icmp")
