@@ -112,7 +112,6 @@ def receiver_ICMP(mySocket, timeout=0):
             packet = header + data
             mySocket.sendto(packet, (addr, 0))
 
-
 # Function to start the sender and receiver threads.
 def ping():
     global target_hostname
